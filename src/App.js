@@ -24,8 +24,6 @@ class App extends React.Component {
             ]
         };
 
-        //this.handleCrazyUpdateClick = this.handleCrazyUpdateClick.bind(this);
-        //this.insertColumn = this.insertColumn.bind(this);
     }
 
     addSimulation = (event) => {
@@ -49,10 +47,6 @@ class App extends React.Component {
         const value = target.value;
         const name = target.name;
 
-        //this.setState({
-        //    selectedSimulation: { ...this.state.selectedSimulation, [name]: value }
-        //});
-
         const newSims = this.state.simulations.map((sim, index) => {
             if (index === this.state.selectedSimulationId) {
                 return { ...sim, [name]: value }
@@ -69,8 +63,6 @@ class App extends React.Component {
 
     render() {
         console.log("app render");
-        //<button onClick={this.handleCrazyUpdateClick}>Crazy update!</button>
-        //    <button onClick={this.insertColumn}>Insert column</button>
         return (
             <div className="container">
                 <div className="row">
@@ -100,9 +92,6 @@ class App extends React.Component {
 
 
 class SimulationForm extends React.PureComponent {
-    //constructor(props) {
-    //    super(props);
-    //}
 
     render() {
         return (
@@ -133,41 +122,3 @@ class SimulationForm extends React.PureComponent {
 
 export default App;
 
-
-    //makeid() {
-    //    var text = "";
-    //    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-
-    //    for (var i = 0; i < 5; i++)
-    //        text += possible.charAt(Math.floor(Math.random() * possible.length));
-
-    //    return text;
-    //}
-    //insertColumn(e) {
-    //    e.preventDefault();
-    //    const newColumns = [
-    //        { property: "id", visible: false, key: true },
-    //        { property: "name", header: "First Name" },
-    //        { property: "occupation", header: "Occupation" },
-    //        { property: "color", header: "Fav Color" }
-    //    ];
-
-    //    this.setState({
-    //        columns: newColumns
-    //    });
-
-    //}
-    //handleCrazyUpdateClick(e) {
-    //    e.preventDefault();
-
-    //    const newActivityLogs = this.state.activityLogs.map((activityLog, index) => {
-    //        if (activityLog.id === 2) {
-    //            return { ...activityLog, name: this.makeid() }
-    //        }
-    //        return activityLog;
-    //    });
-
-    //    this.setState({
-    //        activityLogs: newActivityLogs
-    //    });
-    //}

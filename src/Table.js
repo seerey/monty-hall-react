@@ -43,9 +43,6 @@ class Table extends React.PureComponent {
 
 
 class TableBody extends React.PureComponent {
-    //clickItBody = (row) => {
-    //    console.log(row);
-    //}
 
     render() {
         const keyColumn = this.props.columns.filter(x => x.key === true)[0].property;
@@ -68,10 +65,6 @@ class TableBody extends React.PureComponent {
 
 
 class TableRow extends React.PureComponent {
-    //clickIt(e) {
-    //    console.log("here we go");
-    //    console.log(e);
-    //}
 
     render() {
         console.log("row render");
