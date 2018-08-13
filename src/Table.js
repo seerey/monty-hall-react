@@ -28,13 +28,15 @@ class Table extends React.PureComponent {
         return (
             <div>
                 <table className="table sim-table table-hover table-sm">
-                    <TableHeaderRow visibleColumns={this.state.visibleColumns} />
+                    <TableHeaderRow visibleColumns={this.state.visibleColumns} isRowDeleteOn={this.props.isRowDeleteOn} />
                     <TableBody
                         columns={this.props.columns}
                         visibleColumns={this.state.visibleColumns}
                         data={this.props.data}
                         selectRow={this.props.selectRow}
-                        selectedRow={this.props.selectedRow} />
+                        selectedRow={this.props.selectedRow}
+                        isRowDeleteOn={this.props.isRowDeleteOn}
+                        deleteRow={this.props.deleteRow} />
                 </table>
             </div>
         );
@@ -43,19 +45,23 @@ class Table extends React.PureComponent {
 
 
 class TableBody extends React.PureComponent {
+    getKeyColumn(columns) {
+        return columns.filter(x => x.key === true)[0].property;
+    }
 
     render() {
-        const keyColumn = this.props.columns.filter(x => x.key === true)[0].property;
-
         return (
             <tbody>
-                {this.props.data.map((row) =>
+                {this.props.data.map((row) =>                    
                     <TableRow
-                        key={row[keyColumn]}
+                        key={row[this.getKeyColumn(this.props.columns)]}
                         row={row}
                         visibleColumns={this.props.visibleColumns}
                         selectRow={this.props.selectRow}
-                        selectedRow={this.props.selectedRow} />
+                        isSelected={row === this.props.selectedRow ? true : false}
+                        isRowDeleteOn={this.props.isRowDeleteOn}
+                        deleteRow={this.props.deleteRow}
+                         />
                 )}
             </tbody>
         );
@@ -69,9 +75,10 @@ class TableRow extends React.PureComponent {
     render() {
         console.log("row render");
         return (
-            <tr onClick={i => this.props.selectRow(this.props.row)} className={this.props.selectedRow === this.props.row ? "table-primary" : ""}>
+            <tr onClick={i => this.props.selectRow(this.props.row)} className={this.props.isSelected ? "table-primary" : ""} >
+                {this.props.isRowDeleteOn ? <td className="del" onClick={i => this.props.deleteRow(this.props.row)}><i className="fas fa-minus-circle delete-icon"></i></td> : null}
                 {this.props.visibleColumns.map((column, i) =>
-                    <td key={column.property}>{this.props.row[column.property]}</td>
+                    <td className={column.property} key={column.property}>{this.props.row[column.property]}</td>
                 )}
             </tr>
         );
@@ -85,8 +92,9 @@ class TableHeaderRow extends React.PureComponent {
         return (
             <thead>
                 <tr>
+                    {this.props.isRowDeleteOn ? <th className="del"></th> : null}
                     {this.props.visibleColumns.map((column) =>
-                        <th key={column.property}>{column.header}</th>
+                        <th className={column.property} key={column.property}>{column.header}</th>
                     )}
                 </tr>
             </thead>

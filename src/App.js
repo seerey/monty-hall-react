@@ -1,14 +1,19 @@
 import React from 'react';
 import Table from './Table';
+import SimulationForm from './SimulationForm';
+import './ie11shim.js';
 import 'bootstrap/dist/css/bootstrap.min.css'
+import '@fortawesome/fontawesome-free/css/all.css'
 import './App.css';
+
+
 
 if (process.env.NODE_ENV !== 'production') {
     const { whyDidYouUpdate } = require('why-did-you-update')
     whyDidYouUpdate(React)
 }
 
-class App extends React.Component {
+class App extends React.PureComponent {
     constructor() {
         super();
         this.state = {
@@ -27,11 +32,26 @@ class App extends React.Component {
     }
 
     addSimulation = (event) => {
-        var nextSimNum = this.state.simulations.length + 1;
+
+        let nextSimNum = 1;        
+        if (this.state.simulations.length > 0) {
+            // Find the highest id, add 1
+            nextSimNum = this.state.simulations.reduce((prev, current) => {
+                return (prev.id > current.id) ? prev : current
+            }).id + 1; 
+        }
+        
         var newSim = { id: nextSimNum, name: "Simulation " + nextSimNum, dateCreated: new Date().toLocaleString() }               
-        console.log(nextSimNum);
         this.setState({
             simulations: [...this.state.simulations, newSim]
+        });
+    }
+
+    deleteSimulation = (row) => {
+
+
+        this.setState({
+            simulations: this.state.simulations.filter(item => item !== row)
         });
     }
 
@@ -72,17 +92,19 @@ class App extends React.Component {
                     </div>
                 </div>
                 <div className="row">
-                    <div className="col">
+                    <div className="col-8">
                         <Table
                             data={this.state.simulations}
                             columns={this.state.simulationColumns}
                             selectRow={this.selectSimulation}
-                            selectedRow={this.state.simulations[this.state.selectedSimulationId]} />
+                            selectedRow={this.state.simulations[this.state.selectedSimulationId]}
+                            isRowDeleteOn={true}
+                            deleteRow={this.deleteSimulation} />
                     </div>
-                    <div className="col">
-                        <SimulationForm
-                            selectedSimulation={this.state.simulations[this.state.selectedSimulationId]}
-                            onSimulationChange={this.onSimulationChange} />
+                    <div className="col-4">
+                        {this.state.simulations.length >= this.state.selectedSimulationId + 1
+                            ? <SimulationForm selectedSimulation={this.state.simulations[this.state.selectedSimulationId]} onSimulationChange={this.onSimulationChange} />
+                            : null}
                     </div>
                 </div>
             </div>
@@ -91,33 +113,6 @@ class App extends React.Component {
 }
 
 
-class SimulationForm extends React.PureComponent {
-
-    render() {
-        return (
-            <form>
-                <div className="form-group">
-                    <label htmlFor="id">ID:</label>
-                    <input type="text" name="id" className="form-control" readOnly
-                        value={this.props.selectedSimulation.id}
-                        onChange={this.props.onSimulationChange} />
-                </div>
-                <div className="form-group">
-                    <label htmlFor="name">Name:</label>
-                    <input type="text" name="name" className="form-control"
-                        value={this.props.selectedSimulation.name}
-                        onChange={this.props.onSimulationChange} />
-                </div>
-                <div className="form-group">
-                    <label htmlFor="dateCreated">Date Created:</label>
-                    <input type="text" name="dateCreated" className="form-control"
-                        value={this.props.selectedSimulation.dateCreated}
-                        onChange={this.props.onSimulationChange} />
-                </div>
-            </form>
-        );
-    }
-}
 
 
 export default App;
