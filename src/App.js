@@ -6,8 +6,6 @@ import 'bootstrap/dist/css/bootstrap.min.css'
 import '@fortawesome/fontawesome-free/css/all.css'
 import './App.css';
 
-
-
 if (process.env.NODE_ENV !== 'production') {
     const { whyDidYouUpdate } = require('why-did-you-update')
     whyDidYouUpdate(React)
@@ -19,12 +17,13 @@ class App extends React.PureComponent {
         this.state = {
             selectedSimulationId: 0,
             simulations: [
-                { id: 1, name: "Simulation 1", dateCreated: new Date().toLocaleString() }
+                { id: 1, name: "Simulation 1", dateCreated: new Date().toLocaleString(), doorCount: 3 }
 
             ],
             simulationColumns: [
                 { property: "id", header: "ID", key: true },
                 { property: "name", header: "Name" },
+                { property: "doorCount", header: "Doors" },
                 { property: "dateCreated", header: "Created Date" }
             ]
         };
@@ -32,7 +31,6 @@ class App extends React.PureComponent {
     }
 
     addSimulation = (event) => {
-
         let nextSimNum = 1;        
         if (this.state.simulations.length > 0) {
             // Find the highest id, add 1
@@ -41,15 +39,13 @@ class App extends React.PureComponent {
             }).id + 1; 
         }
         
-        var newSim = { id: nextSimNum, name: "Simulation " + nextSimNum, dateCreated: new Date().toLocaleString() }               
+        var newSim = { id: nextSimNum, name: "Simulation " + nextSimNum, doorCount: 3, dateCreated: new Date().toLocaleString() }               
         this.setState({
             simulations: [...this.state.simulations, newSim]
         });
     }
 
     deleteSimulation = (row) => {
-
-
         this.setState({
             simulations: this.state.simulations.filter(item => item !== row)
         });
@@ -58,6 +54,19 @@ class App extends React.PureComponent {
     selectSimulation = (row) => {
         this.setState({
             selectedSimulationId: this.state.simulations.findIndex(x => x.id === row.id)
+        });
+    }
+
+    onDoorCountChange = (doorCount) => {
+        const newSims = this.state.simulations.map((sim, index) => {
+            if (index === this.state.selectedSimulationId) {
+                return { ...sim, doorCount: doorCount }
+            }
+            return sim;
+        });
+
+        this.setState({
+            simulations: newSims
         });
     }
 
@@ -83,6 +92,16 @@ class App extends React.PureComponent {
 
     render() {
         console.log("app render");
+
+        var simulationForm = null; 
+        // if a simulation is selected
+        if (this.state.simulations.length >= this.state.selectedSimulationId + 1) {
+            simulationForm = <SimulationForm
+                selectedSimulation={this.state.simulations[this.state.selectedSimulationId]}
+                onSimulationChange={this.onSimulationChange}
+                onDoorCountChange={this.onDoorCountChange} />;                
+        };
+
         return (
             <div className="container">
                 <div className="row">
@@ -102,9 +121,7 @@ class App extends React.PureComponent {
                             deleteRow={this.deleteSimulation} />
                     </div>
                     <div className="col-4">
-                        {this.state.simulations.length >= this.state.selectedSimulationId + 1
-                            ? <SimulationForm selectedSimulation={this.state.simulations[this.state.selectedSimulationId]} onSimulationChange={this.onSimulationChange} />
-                            : null}
+                        {simulationForm}
                     </div>
                 </div>
             </div>

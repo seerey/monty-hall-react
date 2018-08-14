@@ -1,21 +1,17 @@
 import React from 'react';
 
+//doorCount, onChange
 class DoorCountChooser extends React.PureComponent {
-    constructor() {
-        super();
-        this.state = { numDoors: 3 };
-    }
-
-    hover = (num) => {
-        this.setState({
-            numDoors: num < 3 ? 3 : num
-        })
-    }
+    //hover = (num) => {
+    //    this.setState({
+    //        numDoors: num < 3 ? 3 : num
+    //    })
+    //}
 
     renderDoorIcon(num) {
-        let doorSelected = num <= this.state.numDoors ? "door-selected" : "";
+        let doorSelectedClass = num <= this.props.doorCount ? "door-selected" : "";
         return (
-            <i className={"fas fa-door-closed " + doorSelected} onMouseOver={x => this.hover(num)}></i>
+            <i className={"fas fa-door-closed " + doorSelectedClass} onMouseOver={x => this.props.onDoorCountChange(num)}></i>
         )
     }
 

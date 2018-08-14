@@ -26,7 +26,9 @@ class SimulationForm extends React.PureComponent {
                 </div>
                 <div className="form-group">
                     <label htmlFor="doors">Doors:</label>
-                    <DoorCountChooser />
+                    <DoorCountChooser
+                        doorCount={this.props.selectedSimulation.doorCount}
+                        onDoorCountChange={this.props.onDoorCountChange} />
                 </div>
             </form>
         );
