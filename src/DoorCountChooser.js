@@ -10,6 +10,7 @@ class DoorCountChooser extends React.PureComponent {
 
     renderDoorIcon(num) {
         let doorSelectedClass = num <= this.props.doorCount ? "door-selected" : "";
+        console.log(this.props.doorCount);
         return (
             <i className={"fas fa-door-closed " + doorSelectedClass} onMouseOver={x => this.props.onDoorCountChange(num)}></i>
         )

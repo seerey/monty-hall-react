@@ -34,7 +34,7 @@ class Table extends React.PureComponent {
                         visibleColumns={this.state.visibleColumns}
                         data={this.props.data}
                         selectRow={this.props.selectRow}
-                        selectedRow={this.props.selectedRow}
+                        selectedRowIndex={this.props.selectedRowIndex}
                         isRowDeleteOn={this.props.isRowDeleteOn}
                         deleteRow={this.props.deleteRow} />
                 </table>
@@ -50,6 +50,8 @@ class TableBody extends React.PureComponent {
     }
 
     render() {
+        console.log("selectedRowIndex: " + this.props.selectedRowIndex);
+
         return (
             <tbody>
                 {this.props.data.map((row) =>                    
@@ -58,7 +60,7 @@ class TableBody extends React.PureComponent {
                         row={row}
                         visibleColumns={this.props.visibleColumns}
                         selectRow={this.props.selectRow}
-                        isSelected={row === this.props.selectedRow ? true : false}
+                        isSelected={this.props.selectedRowIndex >= 0 && row === this.props.data[this.props.selectedRowIndex] ? true : false}
                         isRowDeleteOn={this.props.isRowDeleteOn}
                         deleteRow={this.props.deleteRow}
                          />
@@ -76,7 +78,7 @@ class TableRow extends React.PureComponent {
         console.log("row render");
         return (
             <tr onClick={i => this.props.selectRow(this.props.row)} className={this.props.isSelected ? "table-primary" : ""} >
-                {this.props.isRowDeleteOn ? <td className="del" onClick={i => this.props.deleteRow(this.props.row)}><i className="fas fa-minus-circle delete-icon"></i></td> : null}
+                {this.props.isRowDeleteOn ? <td className="del" onClick={(event) => this.props.deleteRow(event, this.props.row)}><i className="fas fa-minus-circle delete-icon"></i></td> : null}
                 {this.props.visibleColumns.map((column, i) =>
                     <td className={column.property} key={column.property}>{this.props.row[column.property]}</td>
                 )}

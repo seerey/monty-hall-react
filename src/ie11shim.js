@@ -1,6 +1,7 @@
 // https://tc39.github.io/ecma262/#sec-array.prototype.findIndex
 (function () {
     if (!Array.prototype.findIndex) {
+        // eslint-disable-next-line
         Object.defineProperty(Array.prototype, 'findIndex', {
             value: function (predicate) {
                 // 1. Let O be ? ToObject(this value).
