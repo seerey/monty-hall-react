@@ -33,7 +33,7 @@ class App extends React.PureComponent {
                 { property: "dateCreated", header: "Created Date" }
             ],
             runs: [],
-            doorsImgs: []
+            doorImgs: []
         };
 
     }
@@ -42,6 +42,7 @@ class App extends React.PureComponent {
         // Add simulation
         let nextSimNum = 1;
         let defaultDoorCount = 3;
+        let selectedSimulationIndex = this.state.simulations.length;
 
         if (this.state.simulations.length > 0) {
             // Find the highest id, add 1
@@ -76,7 +77,7 @@ class App extends React.PureComponent {
         var newRun = {
             simulationId: newSim.id,
             id: 1,
-            carDoor: this.generateRandomNum(defaultDoorCount),
+            carDoor: null,
             stayDoor: null,
             switchDoor: null,
             action: "Start",
@@ -88,7 +89,7 @@ class App extends React.PureComponent {
         this.setState({
             simulations: [...this.state.simulations, newSim],            
             runs: [...this.state.runs, newRun],
-            selectedSimulationIndex: this.state.simulations.length,            
+            selectedSimulationIndex: selectedSimulationIndex,
             doorImgs: doorImgs
         });
 
@@ -107,11 +108,36 @@ class App extends React.PureComponent {
 
     }
 
+    getCurrentRun(selectedSimulationIndex) {
+        if (typeof selectedSimulationIndex !== "number")
+            selectedSimulationIndex = this.state.selectedSimulationIndex;
+
+        var simulation = this.state.simulations[selectedSimulationIndex];
+        var run = this.state.runs.find(run => run.simulationId === simulation.id && run.id === simulation.currentRunId);
+        return run;
+    }
+
+    getCurrentSimulation(selectedSimulationIndex) {
+        if (typeof selectedSimulationIndex !== "number")
+            selectedSimulationIndex = this.state.selectedSimulationIndex;
+        return this.state.simulations[selectedSimulationIndex];
+    }
+
+
     selectSimulation = (row) => {
         console.log("select simulation");
+        const simIndex = this.state.simulations.findIndex(x => x === row)
+
+        if (simIndex >= 0) {
+            console.log("setting doors");
+            this.setState({
+                doorImgs: this.getDoorImgs(row.doorCount, this.getCurrentRun(simIndex))
+            });
+        }
+        
         this.setState({
-            selectedSimulationIndex: this.state.simulations.findIndex(x => x.id === row.id)
-        });
+            selectedSimulationIndex: simIndex            
+        });              
     }
 
 
@@ -126,23 +152,12 @@ class App extends React.PureComponent {
                 return { ...sim, doorCount: doorCount }
             }
             return sim;
-        });
+        });        
 
-        // Enumerate runs to re-calc the car door for the selected simulation
-        var newRun = null;
-        const newRuns = this.state.runs.map((run, index) => {
-            if (run.simulationId === this.state.selectedSimulationIndex) {
-                newRun = { ...run, carDoor: this.generateRandomNum(doorCount) };
-                return newRun;
-            }
-            return run;
-        });
-
-        const newDoorImgs = this.getDoorImgs(doorCount, newRun);
+        const newDoorImgs = this.getDoorImgs(doorCount);
 
         this.setState({
-            simulations: newSims,
-            runs: newRuns,
+            simulations: newSims,            
             doorImgs: newDoorImgs
         });
     }
@@ -168,7 +183,7 @@ class App extends React.PureComponent {
     generateRandomNum(max, exclude) {
         let num = Math.floor(Math.random() * max) + 1;
         if (exclude > 0) {
-            while (num !== exclude) {                
+            while (num === exclude) {                
                 num = Math.floor(Math.random() * max) + 1;
             }
         }
@@ -193,17 +208,15 @@ class App extends React.PureComponent {
             newRun.stayDoor = door;
             // if first pick is the car door, find a random door to offer switch
             if (newRun.stayDoor === newRun.carDoor) {
-                newRun.switchDoor = this.generateRandomNum(doorCount, newRun.stayNumber);
+                newRun.switchDoor = this.generateRandomNum(doorCount, newRun.stayDoor);
             }
             // otherwise, the switch door is the car door
             else {
                 newRun.switchDoor = newRun.carDoor;
             }
             newRun.action = "StayOrSwitch";            
-            return newRun;
         }
-
-        if (newRun.action === "StayOrSwitch") {
+        else if (newRun.action === "StayOrSwitch") {
             // if they picked the door
             if (door === newRun.stayDoor) {
                 newRun.action = "Stay";
@@ -219,13 +232,14 @@ class App extends React.PureComponent {
                 newRun.outcome = "Lose";
             }
         }
+        return newRun;
     }
 
     getDoorImg(door, run) {
-        if (run.action === "Start") {
+        if (!run || run.action === "Start") {
             return ImgDoor;
         }
-        else if (run.action === "SwitchOrStay") {
+        else if (run.action === "StayOrSwitch") {
             if (door === run.stayDoor) {
                 return ImgStay;
             }
@@ -235,35 +249,40 @@ class App extends React.PureComponent {
             return ImgGoat;
         }
         // end of game
-        else {
-            if (run.outcome === "Win") {
-                if (door === run.carDoor)
-                    return ImgCarYouWin;
-                else
-                    return ImgCar;               
-            }            
-            else if (run.outcome === "Lose") {
-                if ((door === run.switchDoor && run.action === "Switch")
-                    || (door === run.stayDoor && run.action === "Stay")) {
+        else {            
+            if (run.outcome === "Win" && door === run.carDoor) {
+                return ImgCarYouWin;
+            }   
+            if (run.outcome === "Lose" && door === run.carDoor) {
+                return ImgCar;
+            }   
+            if ((door === run.switchDoor && run.action === "Switch")
+                || (door === run.stayDoor && run.action === "Stay")) {
                     return ImgGoatYouLost;
-                }
-                else {
-                    return ImgGoat;
-                }
-            }
+            }            
         }
-        return null;
+        return ImgGoat;
     }
 
     getDoorImgs(doorCount, run) {
-        const doors = Array.from({ length: doorCount }, (_, i) => this.getDoorImg(i, run));
+        const doors = Array.from({ length: doorCount }, (_, i) => this.getDoorImg(i+1, run));
         return doors;
     }
 
-    selectDoor = (doorCount, currentRun, door) => {
-        var selectedSim = this.state.simulations[this.state.selectedSimulationIndex];
+    selectDoor = (door) => {
+        var selectedSim = this.getCurrentSimulation();
+        var newRun = this.getCurrentRun();        
 
-        var newRun = this.playGame(selectedSim.doorCount, currentRun, door)
+        // Calculate the car door if it hasn't been set
+        if (typeof newRun.carDoor !== "number") {
+            var newCarDoor = this.generateRandomNum(selectedSim.doorCount);
+            newRun = { ...newRun, carDoor: newCarDoor };
+        }
+        
+        // Play game and get a new run
+        newRun = this.playGame(selectedSim.doorCount, newRun, door)
+        
+        // Enumerate the runs to update the one that just changed
         const newRuns = this.state.runs.map((run, index) => {
             if (run.id === newRun.id && run.simulationId === newRun.simulationId) {
                 return newRun;
@@ -272,6 +291,7 @@ class App extends React.PureComponent {
         });
 
         const doorImgs = this.getDoorImgs(selectedSim.doorCount, newRun);
+
         this.setState({
             runs: newRuns,
             doorImgs: doorImgs
@@ -292,9 +312,8 @@ class App extends React.PureComponent {
                 selectedSimulation={selectedSim}
                 onSimulationChange={this.onSimulationChange}
                 onDoorCountChange={this.onDoorCountChange} />;
-
-            var currentRun = this.state.runs[this.state.runs.findIndex(run => run.id === selectedSim.currentRunId)];            
-            stage = <Stage doorCount={selectedSim.doorCount} run={currentRun} doorImgs={this.state.doorImgs} selectDoor={this.selectDoor} />;
+            
+            stage = <Stage doorImgs={this.state.doorImgs} selectDoor={this.selectDoor} />;
         };
 
         return (

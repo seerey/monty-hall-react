@@ -37,13 +37,13 @@ table {
     }
 
 
-        table th.del, table td.del {
-            width: 30px;
-        }
+    table th.del, table td.del {
+        width: 30px;
+    }
 
-        table th.id, table td.id {
-            width: 40px;
-        }
+    table th.id, table td.id {
+        width: 40px;
+    }
 
     table .delete-icon {
         display: none;
@@ -54,10 +54,16 @@ table {
         cursor: pointer;
     }
 
-    .door-count-chooser {
-        font-size: 1.3em;
-    }
+.door-count-chooser {
+    font-size: 1.3em;
+}
 
     .door-count-chooser .door-selected {
         color: red;
     }
+
+
+.stage img {
+    margin-right: 10px;
+    margin-top: 10px;
+}
