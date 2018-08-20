@@ -1,6 +1,7 @@
 // https://tc39.github.io/ecma262/#sec-array.prototype.findIndex
 (function () {
     if (!String.prototype.startsWith) {
+        // eslint-disable-next-line
         String.prototype.startsWith = function (search, pos) {
             return this.substr(!pos || pos < 0 ? 0 : +pos, search.length) === search;
         };
