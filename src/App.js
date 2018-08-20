@@ -20,7 +20,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 class App extends React.PureComponent {
-    
+
     constructor() {
         super();
         this.state = {
@@ -32,8 +32,12 @@ class App extends React.PureComponent {
                 { property: "doorCount", header: "Doors" },
                 { property: "dateCreated", header: "Created Date" }
             ],
+            runColumns: [],
             runs: [],
-            doorImgs: []
+            doorImgs: [],
+            isPlayAgainEnabled: true,
+            isGoForwardEnabled: true,
+            isGoBackEnabled: true
         };
 
     }
@@ -54,9 +58,10 @@ class App extends React.PureComponent {
         var newSim = {
             id: nextSimNum,
             name: "Simulation " + nextSimNum,
-            doorCount: defaultDoorCount,            
+            doorCount: defaultDoorCount,
             dateCreated: new Date().toLocaleString(),
-            currentRunId: 1
+            currentRunId: 1,
+            locked: false
         };
 
         // Add run
@@ -74,9 +79,40 @@ class App extends React.PureComponent {
         //    }).id + 1;
         //}
 
+        var newRun = this.createRun(newSim.id, 1);
+
+        const doorImgs = this.getDoorImgs(defaultDoorCount, newRun);
+
+
+        var doorColumns = [];
+        for (var doorNum = 1; doorNum <= newSim.doorCount; doorNum++) {
+            doorColumns.push({ property: `D${doorNum}`, header: `D${doorNum}` });
+        }
+
+        var runColumns = [
+            { property: "id", header: "Play", key: true },
+            ...doorColumns,
+            { property: "stayDoor", header: "Stay Door" },
+            { property: "switchDoor", header: "Switch Door" },
+            { property: "action", header: "Action" },
+            { property: "outcome", header: "Outcome" }
+        ];
+
+        this.setState({
+            simulations: [...this.state.simulations, newSim],
+            runs: [...this.state.runs, newRun],
+            selectedSimulationIndex: selectedSimulationIndex,
+            doorImgs: doorImgs,
+            runColumns: runColumns
+        });
+
+
+    }
+
+    createRun(simId, runId) {
         var newRun = {
-            simulationId: newSim.id,
-            id: 1,
+            simulationId: simId,
+            id: runId,
             carDoor: null,
             stayDoor: null,
             switchDoor: null,
@@ -84,28 +120,18 @@ class App extends React.PureComponent {
             outcome: null
         };
 
-        const doorImgs = this.getDoorImgs(defaultDoorCount, newRun);
-
-        this.setState({
-            simulations: [...this.state.simulations, newSim],            
-            runs: [...this.state.runs, newRun],
-            selectedSimulationIndex: selectedSimulationIndex,
-            doorImgs: doorImgs
-        });
-
-
+        return newRun;
     }
 
-    deleteSimulation = (event, row) => {
+    deleteSimulation = (event, selectedSim) => {
         // prevent the delete icon click from selecting the row
         event.stopPropagation();
 
         this.setState({
-            simulations: this.state.simulations.filter(item => item !== row),
+            simulations: this.state.simulations.filter(sim => sim !== selectedSim),
+            runs: this.state.runs.filter(run => run.simulationId !== selectedSim.id),
             selectedSimulationIndex: null
         });
-
-
     }
 
     getCurrentRun(selectedSimulationIndex) {
@@ -123,21 +149,37 @@ class App extends React.PureComponent {
         return this.state.simulations[selectedSimulationIndex];
     }
 
-
-    selectSimulation = (row) => {
+    selectSimulation = (sim) => {
         console.log("select simulation");
-        const simIndex = this.state.simulations.findIndex(x => x === row)
+        const simIndex = this.state.simulations.findIndex(x => x === sim)
 
         if (simIndex >= 0) {
             console.log("setting doors");
             this.setState({
-                doorImgs: this.getDoorImgs(row.doorCount, this.getCurrentRun(simIndex))
+                doorImgs: this.getDoorImgs(sim.doorCount, this.getCurrentRun(simIndex))
             });
         }
-        
+
+        var doorColumns = [];
+        for (var doorNum = 1; doorNum <= sim.doorCount; doorNum++) {
+            doorColumns.push({ property: `D${doorNum}`, header: `D${doorNum}` });
+        }
+
+        var runColumns = [
+            { property: "id", header: "Play", key: true },
+            ...doorColumns,
+            { property: "stayDoor", header: "Stay Door" },
+            { property: "switchDoor", header: "Switch Door" },
+            { property: "action", header: "Action" },
+            { property: "outcome", header: "Outcome" }
+        ];
+
         this.setState({
-            selectedSimulationIndex: simIndex            
-        });              
+            selectedSimulationIndex: simIndex,
+            runColumns: runColumns
+        });
+
+
     }
 
 
@@ -152,13 +194,28 @@ class App extends React.PureComponent {
                 return { ...sim, doorCount: doorCount }
             }
             return sim;
-        });        
+        });
+
+        var doorColumns = [];        
+        for (var doorNum = 1; doorNum <= doorCount; doorNum++) {
+            doorColumns.push({ property: `D${doorNum}`, header: `D${doorNum}` });
+        }
+
+        var runColumns = [
+            { property: "id", header: "Play", key: true },
+            ...doorColumns,
+            { property: "stayDoor", header: "Stay Door" },
+            { property: "switchDoor", header: "Switch Door" },
+            { property: "action", header: "Action" },
+            { property: "outcome", header: "Outcome" }
+        ];
 
         const newDoorImgs = this.getDoorImgs(doorCount);
 
         this.setState({
-            simulations: newSims,            
-            doorImgs: newDoorImgs
+            simulations: newSims,
+            doorImgs: newDoorImgs,
+            runColumns: runColumns
         });
     }
 
@@ -183,24 +240,12 @@ class App extends React.PureComponent {
     generateRandomNum(max, exclude) {
         let num = Math.floor(Math.random() * max) + 1;
         if (exclude > 0) {
-            while (num === exclude) {                
+            while (num === exclude) {
                 num = Math.floor(Math.random() * max) + 1;
             }
         }
         return num;
     }
-
-    //createRun(doorCount, simulationId,) {
-    //    return {
-    //        simulationId: simulationId,
-    //        id: 1,            
-    //        carDoor: this.generateRandomNum(doorCount),
-    //        stayDoor: null,
-    //        switchDoor: null,
-    //        action: "Start",
-    //        outcome: null
-    //    }
-    //}
 
     playGame(doorCount, run, door) {
         var newRun = { ...run };
@@ -214,7 +259,7 @@ class App extends React.PureComponent {
             else {
                 newRun.switchDoor = newRun.carDoor;
             }
-            newRun.action = "StayOrSwitch";            
+            newRun.action = "StayOrSwitch";
         }
         else if (newRun.action === "StayOrSwitch") {
             // if they picked the door
@@ -223,6 +268,10 @@ class App extends React.PureComponent {
             }
             else if (door === newRun.switchDoor) {
                 newRun.action = "Switch"
+            }
+            else {
+                // selected an already open door
+                return newRun;
             }
 
             if (door === newRun.carDoor) {
@@ -249,39 +298,56 @@ class App extends React.PureComponent {
             return ImgGoat;
         }
         // end of game
-        else {            
+        else {
             if (run.outcome === "Win" && door === run.carDoor) {
                 return ImgCarYouWin;
-            }   
+            }
             if (run.outcome === "Lose" && door === run.carDoor) {
                 return ImgCar;
-            }   
+            }
             if ((door === run.switchDoor && run.action === "Switch")
                 || (door === run.stayDoor && run.action === "Stay")) {
-                    return ImgGoatYouLost;
-            }            
+                return ImgGoatYouLost;
+            }
         }
         return ImgGoat;
     }
 
     getDoorImgs(doorCount, run) {
-        const doors = Array.from({ length: doorCount }, (_, i) => this.getDoorImg(i+1, run));
+        var doors = [];
+        for (var doorNum = 1; doorNum <= doorCount; doorNum++) {
+            doors.push(this.getDoorImg(doorNum, run));
+        }
         return doors;
     }
 
     selectDoor = (door) => {
         var selectedSim = this.getCurrentSimulation();
-        var newRun = this.getCurrentRun();        
+        var newRun = this.getCurrentRun();
+
+        // Lock the simulation if it's not
+        if (selectedSim.locked === false) {
+            const newSims = this.state.simulations.map((sim, index) => {
+                if (index === this.state.selectedSimulationIndex) {
+                    return { ...sim, locked: true }
+                }
+                return sim;
+            });
+
+            this.setState({
+                simulations: newSims
+            });
+        }
 
         // Calculate the car door if it hasn't been set
         if (typeof newRun.carDoor !== "number") {
             var newCarDoor = this.generateRandomNum(selectedSim.doorCount);
             newRun = { ...newRun, carDoor: newCarDoor };
         }
-        
+
         // Play game and get a new run
         newRun = this.playGame(selectedSim.doorCount, newRun, door)
-        
+
         // Enumerate the runs to update the one that just changed
         const newRuns = this.state.runs.map((run, index) => {
             if (run.id === newRun.id && run.simulationId === newRun.simulationId) {
@@ -298,29 +364,158 @@ class App extends React.PureComponent {
         });
     }
 
+    playAgain(sim, maxRunId, outcome) {
+        if (!this.isPlayAgainEnabled(outcome))
+            return;
+
+        let newRunId = maxRunId + 1;
+        let newRun = this.createRun(sim.id, newRunId);
+
+        // Enumerate simulations to modify the currentRunId
+        const newSims = this.state.simulations.map((sim, index) => {
+            if (index === this.state.selectedSimulationIndex) {
+                return { ...sim, currentRunId: newRunId }
+            }
+            return sim;
+        });
+
+        const doorImgs = this.getDoorImgs(sim.doorCount, newRun);
+
+        this.setState({
+            runs: [...this.state.runs, newRun],
+            simulations: newSims,
+            doorImgs: doorImgs
+        });
+    }
+
+    isPlayAgainEnabled(outcome) {
+        return outcome === "Win" || outcome === "Lose" ? true : false;
+    }
+
+    isGoBackEnabled(runId) {
+        return runId > 1 ? true : false;
+    }
+
+    isGoForwardEnabled(runId, maxRunId) {
+        return runId < maxRunId ? true : false;
+    }
+
+    goBack(selectedSim, currentRunId) {
+        if (!this.isGoBackEnabled(currentRunId))
+            return;
+
+        const targetRunId = currentRunId - 1;
+
+        // Enumerate simulations to modify the currentRunId
+        const newSims = this.state.simulations.map((sim, index) => {
+            if (index === this.state.selectedSimulationIndex) {
+                return { ...sim, currentRunId: targetRunId }
+            }
+            return sim;
+        });
+        const targetRun = this.state.runs.find(run => run.simulationId === selectedSim.id
+            && run.id === targetRunId);
+        const doorImgs = this.getDoorImgs(selectedSim.doorCount, targetRun);
+
+        this.setState({
+            simulations: newSims,
+            doorImgs: doorImgs
+        });
+    }
+
+    goForward(selectedSim, currentRunId, maxRunId) {
+        if (!this.isGoForwardEnabled(currentRunId, maxRunId))
+            return;
+
+        const targetRunId = currentRunId + 1;
+
+        // Enumerate simulations to modify the currentRunId
+        const newSims = this.state.simulations.map((sim, index) => {
+            if (index === this.state.selectedSimulationIndex) {
+                return { ...sim, currentRunId: targetRunId }
+            }
+            return sim;
+        });
+        const targetRun = this.state.runs.find(run => run.simulationId === selectedSim.id
+            && run.id === targetRunId);
+        const doorImgs = this.getDoorImgs(selectedSim.doorCount, targetRun);
+
+        this.setState({
+            simulations: newSims,
+            doorImgs: doorImgs
+        });
+    }
+
+    runsTableDataMapper(visibleColumns, run) {
+        var tds = visibleColumns.map((column, i) => {
+            var text = run[column.property];
+            if (column.property.startsWith("D")) {
+                const doorNum = parseInt(column.property.substring(1), 10)
+                if (doorNum > 0 && run.carDoor === doorNum) {
+                    text = "C";
+                }
+                else {
+                    text = "G"
+                }
+            }
+
+            return <td className={column.property} key={column.property}>{text}</td>
+        })            
+        return tds
+    }
 
     render() {
         console.log("app render");
         var simulationForm = null;
         var stage = null;
+        var runsTable = null;
 
         // if a simulation is selected
         if (this.state.selectedSimulationIndex >= 0 && this.state.simulations[this.state.selectedSimulationIndex]) {
 
-            var selectedSim = this.state.simulations[this.state.selectedSimulationIndex];
+            const selectedSim = this.getCurrentSimulation();
+            const currentRun = this.getCurrentRun();
+            const maxRunId = this.state.runs.filter(x => x.simulationId === selectedSim.id).length;
+            const maxRun = this.state.runs.find(x => x.simulationId === selectedSim.id && x.id === maxRunId);
+            const isPlayAgainEnabled = this.isPlayAgainEnabled(maxRun.outcome);
+            const isGoForwardEnabled = this.isGoForwardEnabled(selectedSim.currentRunId, maxRunId);
+            const isGoBackEnabled = this.isGoBackEnabled(currentRun.id);
+            const selectedSimRuns = this.state.runs.filter(run =>
+                run.simulationId === selectedSim.id
+                && run.outcome);
+
             simulationForm = <SimulationForm
                 selectedSimulation={selectedSim}
                 onSimulationChange={this.onSimulationChange}
                 onDoorCountChange={this.onDoorCountChange} />;
-            
-            stage = <Stage doorImgs={this.state.doorImgs} selectDoor={this.selectDoor} />;
+
+            stage = <Stage
+                doorImgs={this.state.doorImgs}
+                selectDoor={this.selectDoor}
+                isGoBackEnabled={isGoBackEnabled}
+                isGoForwardEnabled={isGoForwardEnabled}
+                isPlayAgainEnabled={isPlayAgainEnabled}
+                playAgain={() => this.playAgain(selectedSim, maxRunId, maxRun.outcome)}
+                goBack={() => this.goBack(selectedSim, currentRun.id)}
+                goForward={() => this.goForward(selectedSim, currentRun.id, maxRunId)}
+            />;
+
+            runsTable =
+                <div>
+                    <span className="table-header">Plays</span>
+                    <Table
+                        data={selectedSimRuns}
+                        customDataMapper={this.runsTableDataMapper}
+                        columns={this.state.runColumns}
+                        isRowDeleteOn={false} />
+                </div>
         };
 
         return (
             <div className="container">
                 <div className="row">
                     <div className="col">
-                        <span className="sim-header">Simulations</span>
+                        <span className="table-header">Simulations</span>
                         <button type="button" className="btn btn-primary" onClick={this.addSimulation}>New</button>
                     </div>
                 </div>
@@ -341,12 +536,13 @@ class App extends React.PureComponent {
                 <div className="row">
                     {stage}
                 </div>
+                <div className="row">
+                    {runsTable}
+                </div>
             </div>
         );
     }
 }
-
-
 
 
 export default App;

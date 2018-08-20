@@ -1,7 +1,7 @@
-.sim-header {
+.table-header {
     font-size: 25px;
     font-weight: 500;
-    margin-right: 10px;
+    margin-right: 10px;    
 }
 
 .sim-table {
@@ -66,4 +66,22 @@ table {
 .stage img {
     margin-right: 10px;
     margin-top: 10px;
+    cursor: pointer;
+}
+
+.btn-play-again {
+    margin-left: 20px;
+}
+
+.run-controls {
+    font-size: 3em;
+}
+    .run-controls i {
+        color: #007bff;
+        margin-left: 10px;
+        cursor: pointer;
+    }
+
+.disabled {
+    opacity: .2;
 }

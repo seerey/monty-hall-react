@@ -29,13 +29,14 @@ class Table extends React.PureComponent {
             <div>
                 <table className="table sim-table table-hover table-sm">
                     <TableHeaderRow visibleColumns={this.state.visibleColumns} isRowDeleteOn={this.props.isRowDeleteOn} />
-                    <TableBody
+                    <TableBody     
                         columns={this.props.columns}
                         visibleColumns={this.state.visibleColumns}
                         data={this.props.data}
+                        customDataMapper={this.props.customDataMapper}
                         selectRow={this.props.selectRow}
                         selectedRowIndex={this.props.selectedRowIndex}
-                        isRowDeleteOn={this.props.isRowDeleteOn}
+                        isRowDeleteOn={this.props.isRowDeleteOn}                        
                         deleteRow={this.props.deleteRow} />
                 </table>
             </div>
@@ -58,6 +59,7 @@ class TableBody extends React.PureComponent {
                     <TableRow
                         key={row[this.getKeyColumn(this.props.columns)]}
                         row={row}
+                        customDataMapper={this.props.customDataMapper}
                         visibleColumns={this.props.visibleColumns}
                         selectRow={this.props.selectRow}
                         isSelected={this.props.selectedRowIndex >= 0 && row === this.props.data[this.props.selectedRowIndex] ? true : false}
@@ -76,12 +78,23 @@ class TableRow extends React.PureComponent {
 
     render() {
         console.log("row render");
+        var tds = null;
+        if (this.props.customDataMapper) {
+            tds = this.props.customDataMapper(this.props.visibleColumns, this.props.row);
+        }
+        else {            
+            tds = this.props.visibleColumns.map((column, i) =>
+                <td className={column.property} key={column.property}>{this.props.row[column.property]}</td>
+            )            
+        }
+
         return (
-            <tr onClick={i => this.props.selectRow(this.props.row)} className={this.props.isSelected ? "table-primary" : ""} >
-                {this.props.isRowDeleteOn ? <td className="del" onClick={(event) => this.props.deleteRow(event, this.props.row)}><i className="fas fa-minus-circle delete-icon"></i></td> : null}
-                {this.props.visibleColumns.map((column, i) =>
-                    <td className={column.property} key={column.property}>{this.props.row[column.property]}</td>
-                )}
+            <tr onClick={this.props.selectRow ? i => this.props.selectRow(this.props.row) : null}
+                className={this.props.isSelected ? "table-primary" : ""} >
+                {this.props.isRowDeleteOn
+                    ? <td className="del" onClick={(event) => this.props.deleteRow(event, this.props.row)}><i className="fas fa-minus-circle delete-icon"></i></td>
+                    : null}
+                {tds}
             </tr>
         );
     }

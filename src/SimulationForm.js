@@ -4,13 +4,23 @@ import DoorCountChooser from './DoorCountChooser';
 class SimulationForm extends React.PureComponent {
 
     render() {
+
+        var doorCount = null;
+        if (this.props.selectedSimulation.locked === true) {
+            doorCount = <input type="text" name="doorCount" className="form-control" readOnly value={this.props.selectedSimulation.doorCount} />;
+        }
+        else {
+            doorCount = <DoorCountChooser
+                doorCount={this.props.selectedSimulation.doorCount}
+                onDoorCountChange={this.props.onDoorCountChange} />;
+        }
+
         return (
             <form>
                 <div className="form-group">
                     <label htmlFor="id">ID:</label>
                     <input type="text" name="id" className="form-control" readOnly
-                        value={this.props.selectedSimulation.id}
-                        onChange={this.props.onSimulationChange} />
+                        value={this.props.selectedSimulation.id} />
                 </div>
                 <div className="form-group">
                     <label htmlFor="name">Name:</label>
@@ -25,10 +35,8 @@ class SimulationForm extends React.PureComponent {
                         onChange={this.props.onSimulationChange} />
                 </div>
                 <div className="form-group">
-                    <label htmlFor="doors">Doors:</label>
-                    <DoorCountChooser
-                        doorCount={this.props.selectedSimulation.doorCount}
-                        onDoorCountChange={this.props.onDoorCountChange} />
+                    <label htmlFor="doorCount">Doors:</label>
+                    {doorCount}
                 </div>
             </form>
         );
