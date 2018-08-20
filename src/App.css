@@ -62,11 +62,24 @@ table {
         color: red;
     }
 
+div {
+    outline-style: none;
+}
+
+img::-moz-selection {
+    background: transparent;
+}
+
+img::selection {
+    background: transparent;
+}
 
 .stage img {
     margin-right: 10px;
     margin-top: 10px;
     cursor: pointer;
+    outline-style: none;
+
 }
 
 .btn-play-again {
