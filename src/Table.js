@@ -2,10 +2,10 @@ import React from 'react';
 
 
 
-if (process.env.NODE_ENV !== 'production') {
-    const { whyDidYouUpdate } = require('why-did-you-update')
-    whyDidYouUpdate(React)
-}
+//if (process.env.NODE_ENV !== 'production') {
+//    const { whyDidYouUpdate } = require('why-did-you-update')
+//    whyDidYouUpdate(React)
+//}
 
 class Table extends React.PureComponent {
     constructor(props) {
@@ -24,7 +24,7 @@ class Table extends React.PureComponent {
     }
     
     render() {
-        console.log("table render");
+        //console.log("table render");
         return (
             <div>
                 <table className="table sim-table table-hover table-sm">
@@ -51,7 +51,7 @@ class TableBody extends React.PureComponent {
     }
 
     render() {
-        console.log("selectedRowIndex: " + this.props.selectedRowIndex);
+        //console.log("selectedRowIndex: " + this.props.selectedRowIndex);
 
         return (
             <tbody>
@@ -77,7 +77,7 @@ class TableBody extends React.PureComponent {
 class TableRow extends React.PureComponent {
 
     render() {
-        console.log("row render");
+        //console.log("row render");
         var tds = null;
         if (this.props.customDataMapper) {
             tds = this.props.customDataMapper(this.props.visibleColumns, this.props.row);
@@ -103,7 +103,7 @@ class TableRow extends React.PureComponent {
 
 class TableHeaderRow extends React.PureComponent {
     render() {
-        console.log("header row render");
+        //console.log("header row render");
         return (
             <thead>
                 <tr>

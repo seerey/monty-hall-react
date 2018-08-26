@@ -14,10 +14,10 @@ import ImgGoatYouLost from './img/GoatYouLost.png';
 import ImgStay from './img/Stay.png';
 import ImgSwitch from './img/switch.png';
 
-if (process.env.NODE_ENV !== 'production') {
-    const { whyDidYouUpdate } = require('why-did-you-update')
-    whyDidYouUpdate(React)
-}
+//if (process.env.NODE_ENV !== 'production') {
+//    const { whyDidYouUpdate } = require('why-did-you-update')
+//    whyDidYouUpdate(React)
+//}
 
 class App extends React.PureComponent {
 
@@ -37,7 +37,9 @@ class App extends React.PureComponent {
             doorImgs: [],
             isPlayAgainEnabled: true,
             isGoForwardEnabled: true,
-            isGoBackEnabled: true
+            isGoBackEnabled: true,
+            repeatType: "Switch",
+            numTimes: 10
         };
 
     }
@@ -150,11 +152,11 @@ class App extends React.PureComponent {
     }
 
     selectSimulation = (sim) => {
-        console.log("select simulation");
+        //console.log("select simulation");
         const simIndex = this.state.simulations.findIndex(x => x === sim)
 
         if (simIndex >= 0) {
-            console.log("setting doors");
+            //console.log("setting doors");
             this.setState({
                 doorImgs: this.getDoorImgs(sim.doorCount, this.getCurrentRun(simIndex))
             });
@@ -237,6 +239,71 @@ class App extends React.PureComponent {
         });
     }
 
+    onRepeaterToolChange = (event) => {
+        event.preventDefault();
+        const value = event.target.value;
+        const name = event.target.name;
+
+        if (name === "numTimes") {
+            this.setState({
+                numTimes: parseInt(value, 10)
+            })
+        }
+        else if (name === "repeatType") {
+            this.setState({
+                repeatType: value
+            })    
+        }
+    }
+
+    onRepeaterToolGo = () => {
+        var sim = this.getCurrentSimulation();    
+        var currentRun = this.getCurrentRun();
+
+        var trimmedRuns = this.state.runs;
+        var startingRunId = null;
+        
+        if (currentRun.outcome === null) {
+            // current run is not finished so remove it
+            trimmedRuns = this.state.runs.filter(run => run !== currentRun);
+            startingRunId = sim.currentRunId; // rewind to current id
+        }
+        else {
+            // current run is finished so start with new id
+            startingRunId = sim.currentRunId + 1;
+        }
+
+        let endingRunId = startingRunId + this.state.numTimes - 1;
+        var autoRuns = [];        
+        
+        for (var runId = startingRunId; runId <= endingRunId; runId++) {
+            let run = this.createRun(sim.id, runId);
+            let firstDoorNum = this.generateRandomNum(sim.doorCount);        
+            let firstPlayRun = this.playGame(sim.doorCount, run, firstDoorNum);
+            var finalDoorNum;
+            if (this.state.repeatType === "Switch") {
+                finalDoorNum = firstPlayRun.switchDoor;
+            }
+            else if (this.state.repeatType === "Stay") {
+                finalDoorNum = firstPlayRun.stayDoor;
+            }
+            var finalRun = this.playGame(sim.doorCount, firstPlayRun, finalDoorNum);
+            autoRuns.push(finalRun);
+        }
+
+        const doorImgs = this.getDoorImgs(sim.doorCount, autoRuns[autoRuns.length - 1]);
+
+        this.setState({            
+            runs: [...trimmedRuns, ...autoRuns],
+            doorImgs: doorImgs
+        });
+
+        // Lock if not already done to prevent change to door count. Set
+        // the new run ID
+        sim = { ...sim, locked: true, currentRunId: endingRunId };
+        this.updateSimulation(sim);
+    }
+
     generateRandomNum(max, exclude) {
         let num = Math.floor(Math.random() * max) + 1;
         if (exclude > 0) {
@@ -249,7 +316,11 @@ class App extends React.PureComponent {
 
     playGame(doorCount, run, door) {
         var newRun = { ...run };
+        
         if (newRun.action === "Start") {
+            // set the car door first
+            newRun.carDoor = this.generateRandomNum(doorCount);
+
             newRun.stayDoor = door;
             // if first pick is the car door, find a random door to offer switch
             if (newRun.stayDoor === newRun.carDoor) {
@@ -321,28 +392,42 @@ class App extends React.PureComponent {
         return doors;
     }
 
+    updateSimulation(simToUpdate) {
+        const newSims = this.state.simulations.map((sim, index) => {
+            if (simToUpdate.id === sim.id) {
+                return simToUpdate
+            }
+            return sim;
+        });
+
+        this.setState({
+            simulations: newSims
+        });
+    }
+
+    //lockSimulation(selectedSim) {
+    //    if (selectedSim.locked === false) {
+    //        const newSims = this.state.simulations.map((sim, index) => {
+    //            if (index === this.state.selectedSimulationIndex) {
+    //                return { ...sim, locked: true }
+    //            }
+    //            return sim;
+    //        });
+
+    //        this.setState({
+    //            simulations: newSims
+    //        });
+    //    }
+    //}
+
     selectDoor = (door) => {
         var selectedSim = this.getCurrentSimulation();
         var newRun = this.getCurrentRun();
 
-        // Lock the simulation if it's not
+        // lock if not already done to prevent change to door count
         if (selectedSim.locked === false) {
-            const newSims = this.state.simulations.map((sim, index) => {
-                if (index === this.state.selectedSimulationIndex) {
-                    return { ...sim, locked: true }
-                }
-                return sim;
-            });
-
-            this.setState({
-                simulations: newSims
-            });
-        }
-
-        // Calculate the car door if it hasn't been set
-        if (typeof newRun.carDoor !== "number") {
-            var newCarDoor = this.generateRandomNum(selectedSim.doorCount);
-            newRun = { ...newRun, carDoor: newCarDoor };
+            const sim = { ...selectedSim, locked: true };
+            this.updateSimulation(sim);
         }
 
         // Play game and get a new run
@@ -465,7 +550,7 @@ class App extends React.PureComponent {
     }
 
     render() {
-        console.log("app render");
+        //console.log("app render");
         var simulationForm = null;
         var stage = null;
         var runsTable = null;
@@ -498,6 +583,8 @@ class App extends React.PureComponent {
                 playAgain={() => this.playAgain(selectedSim, maxRunId, maxRun.outcome)}
                 goBack={() => this.goBack(selectedSim, currentRun.id)}
                 goForward={() => this.goForward(selectedSim, currentRun.id, maxRunId)}
+                onRepeaterToolChange={this.onRepeaterToolChange}
+                onRepeaterToolGo={this.onRepeaterToolGo}
             />;
 
             runsTable =

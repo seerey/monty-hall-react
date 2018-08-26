@@ -74,6 +74,13 @@ img::selection {
     background: transparent;
 }
 
+.stage-item {
+    margin-top: 30px;
+}
+.repeat-tool select {
+    margin: 10px;
+}
+
 .stage img {
     margin-right: 10px;
     margin-top: 10px;
