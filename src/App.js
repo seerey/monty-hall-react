@@ -30,7 +30,9 @@ class App extends React.PureComponent {
                 { property: "id", header: "ID", key: true },
                 { property: "name", header: "Name" },
                 { property: "doorCount", header: "Doors" },
-                { property: "dateCreated", header: "Created Date" }
+                { property: "dateCreated", header: "Created Date", visible: false },
+                { property: "switchWinPercent", header: "Switch Win" },             
+                { property: "stayWinPercent", header: "Stay Win" }
             ],
             runColumns: [],
             runs: [],
@@ -45,7 +47,6 @@ class App extends React.PureComponent {
     }
 
     addSimulation = (event) => {
-        // Add simulation
         let nextSimNum = 1;
         let defaultDoorCount = 3;
         let selectedSimulationIndex = this.state.simulations.length;
@@ -62,29 +63,15 @@ class App extends React.PureComponent {
             name: "Simulation " + nextSimNum,
             doorCount: defaultDoorCount,
             dateCreated: new Date().toLocaleString(),
+            switchWinPercent: "0%",
+            stayWinPercent: "0%",
             currentRunId: 1,
             locked: false
         };
 
-        // Add run
-        //let nextRunNum = 1;
-        //if (this.state.runs.length > 0) {
-        //    // Find the highest id, add 1
-        //    var simRuns = [];
-        //    this.state.runs.forEach(run => {
-        //        if (run.simulationId === newSim.id) {
-        //            simRuns.push(run);
-        //        }
-        //    });
-        //    nextRunNum = simRuns.reduce((prev, current) => {
-        //        return (prev.id > current.id) ? prev : current
-        //    }).id + 1;
-        //}
-
         var newRun = this.createRun(newSim.id, 1);
 
         const doorImgs = this.getDoorImgs(defaultDoorCount, newRun);
-
 
         var doorColumns = [];
         for (var doorNum = 1; doorNum <= newSim.doorCount; doorNum++) {
@@ -109,6 +96,13 @@ class App extends React.PureComponent {
         });
 
 
+    }
+
+    getPercent(runs, outcome, action) {
+        const portionCount = runs.filter(x => x.outcome === outcome && x.action === action).length;
+        const totalCount = runs.filter(x => x.action === action).length;
+        const percent = portionCount === 0 || totalCount === 0 ? 0 : (portionCount / totalCount) * 100;        
+        return (percent).toFixed(1) + '%';
     }
 
     createRun(simId, runId) {
@@ -152,11 +146,9 @@ class App extends React.PureComponent {
     }
 
     selectSimulation = (sim) => {
-        //console.log("select simulation");
         const simIndex = this.state.simulations.findIndex(x => x === sim)
 
         if (simIndex >= 0) {
-            //console.log("setting doors");
             this.setState({
                 doorImgs: this.getDoorImgs(sim.doorCount, this.getCurrentRun(simIndex))
             });
@@ -180,30 +172,21 @@ class App extends React.PureComponent {
             selectedSimulationIndex: simIndex,
             runColumns: runColumns
         });
-
-
     }
-
 
     onDoorCountChange = (doorCount) => {
         if (doorCount < 3) {
             doorCount = 3;
         }
 
-        // Enumerate simulations to modify the doorCount for the selected simulation
-        const newSims = this.state.simulations.map((sim, index) => {
-            if (index === this.state.selectedSimulationIndex) {
-                return { ...sim, doorCount: doorCount }
-            }
-            return sim;
-        });
+        const newSims = this.updateSimulations({ ...this.getCurrentSimulation(), doorCount: doorCount });
 
         var doorColumns = [];        
         for (var doorNum = 1; doorNum <= doorCount; doorNum++) {
             doorColumns.push({ property: `D${doorNum}`, header: `D${doorNum}` });
         }
 
-        var runColumns = [
+        var newRunColumns = [
             { property: "id", header: "Play", key: true },
             ...doorColumns,
             { property: "stayDoor", header: "Stay Door" },
@@ -217,23 +200,15 @@ class App extends React.PureComponent {
         this.setState({
             simulations: newSims,
             doorImgs: newDoorImgs,
-            runColumns: runColumns
+            runColumns: newRunColumns
         });
     }
 
     onSimulationChange = (event) => {
         event.preventDefault();
-        const target = event.target;
-        const value = target.value;
-        const name = target.name;
-
-        const newSims = this.state.simulations.map((sim, index) => {
-            if (index === this.state.selectedSimulationIndex) {
-                return { ...sim, [name]: value }
-            }
-            return sim;
-        });
-
+        const value = event.target.value;
+        const name = event.target.name;
+        const newSims = this.updateSimulations({ ...this.getCurrentSimulation(), [name]: value })
         this.setState({
             simulations: newSims
         });
@@ -291,17 +266,24 @@ class App extends React.PureComponent {
             autoRuns.push(finalRun);
         }
 
-        const doorImgs = this.getDoorImgs(sim.doorCount, autoRuns[autoRuns.length - 1]);
+        const newRuns = [...trimmedRuns, ...autoRuns];
+        const newSimRuns = newRuns.filter(x => x.simulationId === sim.id);
+
+        const newDoorImgs = this.getDoorImgs(sim.doorCount, newRuns[newRuns.length - 1]);
+
+        const newSim = {
+            ...sim,
+            locked: true,  // lock to prevent change to door count
+            currentRunId: endingRunId,
+            switchWinPercent: this.getPercent(newSimRuns, "Win", "Switch"),
+            stayWinPercent: this.getPercent(newSimRuns, "Win", "Stay")
+        };
 
         this.setState({            
-            runs: [...trimmedRuns, ...autoRuns],
-            doorImgs: doorImgs
-        });
-
-        // Lock if not already done to prevent change to door count. Set
-        // the new run ID
-        sim = { ...sim, locked: true, currentRunId: endingRunId };
-        this.updateSimulation(sim);
+            simulations: this.updateSimulations(newSim),
+            runs: newRuns,
+            doorImgs: newDoorImgs
+        });        
     }
 
     generateRandomNum(max, exclude) {
@@ -392,60 +374,47 @@ class App extends React.PureComponent {
         return doors;
     }
 
-    updateSimulation(simToUpdate) {
+    updateSimulations(simToUpdate) {
         const newSims = this.state.simulations.map((sim, index) => {
             if (simToUpdate.id === sim.id) {
                 return simToUpdate
             }
             return sim;
         });
-
-        this.setState({
-            simulations: newSims
-        });
+        return newSims;
     }
 
-    //lockSimulation(selectedSim) {
-    //    if (selectedSim.locked === false) {
-    //        const newSims = this.state.simulations.map((sim, index) => {
-    //            if (index === this.state.selectedSimulationIndex) {
-    //                return { ...sim, locked: true }
-    //            }
-    //            return sim;
-    //        });
-
-    //        this.setState({
-    //            simulations: newSims
-    //        });
-    //    }
-    //}
-
-    selectDoor = (door) => {
-        var selectedSim = this.getCurrentSimulation();
-        var newRun = this.getCurrentRun();
-
-        // lock if not already done to prevent change to door count
-        if (selectedSim.locked === false) {
-            const sim = { ...selectedSim, locked: true };
-            this.updateSimulation(sim);
-        }
-
-        // Play game and get a new run
-        newRun = this.playGame(selectedSim.doorCount, newRun, door)
-
-        // Enumerate the runs to update the one that just changed
+    updateRuns(runToUpdate) {
         const newRuns = this.state.runs.map((run, index) => {
-            if (run.id === newRun.id && run.simulationId === newRun.simulationId) {
-                return newRun;
+            if (runToUpdate.simulationId === run.simulationId && runToUpdate.id === run.id) {
+                return runToUpdate
             }
             return run;
         });
+        return newRuns;
+    }
 
-        const doorImgs = this.getDoorImgs(selectedSim.doorCount, newRun);
+    selectDoor = (door) => {
+        var selectedSim = this.getCurrentSimulation();
+
+        // Play game and get a new run
+        const newRun = this.playGame(selectedSim.doorCount, this.getCurrentRun(), door)
+        const newRuns = this.updateRuns(newRun);
+        const newSimRuns = newRuns.filter(x => x.simulationId === selectedSim.id);
+
+        const newDoorImgs = this.getDoorImgs(selectedSim.doorCount, newRun);
+        
+        const newSim = {
+            ...selectedSim,
+            locked: true,  // lock to prevent change to door count
+            switchWinPercent: this.getPercent(newSimRuns, "Win", "Switch"),
+            stayWinPercent: this.getPercent(newSimRuns, "Win", "Stay")
+        };
 
         this.setState({
+            simulations: this.updateSimulations(newSim),
             runs: newRuns,
-            doorImgs: doorImgs
+            doorImgs: newDoorImgs            
         });
     }
 
@@ -490,21 +459,13 @@ class App extends React.PureComponent {
             return;
 
         const targetRunId = currentRunId - 1;
-
-        // Enumerate simulations to modify the currentRunId
-        const newSims = this.state.simulations.map((sim, index) => {
-            if (index === this.state.selectedSimulationIndex) {
-                return { ...sim, currentRunId: targetRunId }
-            }
-            return sim;
-        });
-        const targetRun = this.state.runs.find(run => run.simulationId === selectedSim.id
-            && run.id === targetRunId);
-        const doorImgs = this.getDoorImgs(selectedSim.doorCount, targetRun);
+        const newSims = this.updateSimulations({ ...this.getCurrentSimulation(), currentRunId: targetRunId });
+        const targetRun = this.state.runs.find(run => run.simulationId === selectedSim.id && run.id === targetRunId);
+        const newDoorImgs = this.getDoorImgs(selectedSim.doorCount, targetRun);
 
         this.setState({
             simulations: newSims,
-            doorImgs: doorImgs
+            doorImgs: newDoorImgs
         });
     }
 
@@ -513,21 +474,13 @@ class App extends React.PureComponent {
             return;
 
         const targetRunId = currentRunId + 1;
-
-        // Enumerate simulations to modify the currentRunId
-        const newSims = this.state.simulations.map((sim, index) => {
-            if (index === this.state.selectedSimulationIndex) {
-                return { ...sim, currentRunId: targetRunId }
-            }
-            return sim;
-        });
-        const targetRun = this.state.runs.find(run => run.simulationId === selectedSim.id
-            && run.id === targetRunId);
-        const doorImgs = this.getDoorImgs(selectedSim.doorCount, targetRun);
+        const newSims = this.updateSimulations({ ...this.getCurrentSimulation(), currentRunId: targetRunId });
+        const targetRun = this.state.runs.find(run => run.simulationId === selectedSim.id && run.id === targetRunId);
+        const newDoorImgs = this.getDoorImgs(selectedSim.doorCount, targetRun);
 
         this.setState({
             simulations: newSims,
-            doorImgs: doorImgs
+            doorImgs: newDoorImgs
         });
     }
 

@@ -1,7 +1,5 @@
 import React from 'react';
 
-
-
 //if (process.env.NODE_ENV !== 'production') {
 //    const { whyDidYouUpdate } = require('why-did-you-update')
 //    whyDidYouUpdate(React)
@@ -24,7 +22,6 @@ class Table extends React.PureComponent {
     }
     
     render() {
-        //console.log("table render");
         return (
             <div>
                 <table className="table sim-table table-hover table-sm">
@@ -44,15 +41,12 @@ class Table extends React.PureComponent {
     };
 }
 
-
 class TableBody extends React.PureComponent {
     getKeyColumn(columns) {
         return columns.filter(x => x.key === true)[0].property;
     }
 
     render() {
-        //console.log("selectedRowIndex: " + this.props.selectedRowIndex);
-
         return (
             <tbody>
                 {this.props.data.map((row) =>                    
@@ -70,14 +64,10 @@ class TableBody extends React.PureComponent {
             </tbody>
         );
     }
-
 }
 
-
 class TableRow extends React.PureComponent {
-
     render() {
-        //console.log("row render");
         var tds = null;
         if (this.props.customDataMapper) {
             tds = this.props.customDataMapper(this.props.visibleColumns, this.props.row);
@@ -100,10 +90,8 @@ class TableRow extends React.PureComponent {
     }
 }
 
-
 class TableHeaderRow extends React.PureComponent {
     render() {
-        //console.log("header row render");
         return (
             <thead>
                 <tr>
@@ -116,6 +104,5 @@ class TableHeaderRow extends React.PureComponent {
         );
     }
 }
-
 
 export default Table;

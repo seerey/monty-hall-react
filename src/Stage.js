@@ -2,7 +2,6 @@ import React from 'react';
 
 class Stage extends React.PureComponent {
     render() {
-        //<button type="button" className="btn btn-primary btn-play-again" onClick={this.props.playAgain}>Play Again</button>
         let goBackClass = this.props.isGoBackEnabled ? "" : "disabled";
         let goForwardClass = this.props.isGoForwardEnabled ? "" : "disabled";
         let playAgainClass = this.props.isPlayAgainEnabled ? "" : "disabled";

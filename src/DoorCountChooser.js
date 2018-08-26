@@ -1,6 +1,5 @@
 import React from 'react';
 
-//doorCount, onChange
 class DoorCountChooser extends React.PureComponent {
     renderDoorIcon(num) {
         let doorSelectedClass = num <= this.props.doorCount ? "door-selected" : "";
